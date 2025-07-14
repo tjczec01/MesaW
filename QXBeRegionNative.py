@@ -26,7 +26,7 @@ import random
 lang_dict_flanders = {"English": 0.8, "French": 0.1, "German": 0.1}
 lang_dict_wallonia = {"English": 0.5, "Dutch": 0.1, "German": 0.4}
 
-def plot_language_wealth_heatmap(model, step_num):
+def plot_language_wealth_heatmap(model, step_num, grid_size):
     # Initialize dictionaries to track language counts and wealth per cell
     cell_data = {}
     for x in range(model.grid.width):
@@ -46,6 +46,14 @@ def plot_language_wealth_heatmap(model, step_num):
     lang_grid = np.zeros((model.grid.height, model.grid.width), dtype=object).T
     wealth_grid = np.zeros((model.grid.height, model.grid.width)).T
     
+    # Calculate dynamic figure size based on grid dimensions
+    cell_size = 1.0  # Base size per cell (inches)
+    padding = 2.0    # Additional padding for labels/title
+    
+    # Determine figure dimensions
+    fig_width = model.grid.width * cell_size + padding
+    fig_height = model.grid.height * cell_size + padding
+    
     for (x, y), data in cell_data.items():
         # Find most prevalent language in cell
         counts = {lang: data[lang] for lang in ['Dutch', 'French', 'German', 'English']}
@@ -60,11 +68,11 @@ def plot_language_wealth_heatmap(model, step_num):
     lang_num_grid = np.vectorize(lang_codes.get)(lang_grid)
     
     # Create figure
-    fig, ax = plt.subplots(figsize=(10, 8))
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
     
     # Create custom colormap for languages
     lang_cmap = LinearSegmentedColormap.from_list('lang_cmap', 
-                                                ['blue', 'red', 'green', 'black'])
+                                                ['blue', 'green', 'red', 'black'])
     
     # Plot language dominance
     lang_plot = ax.imshow(lang_num_grid, cmap=lang_cmap, 
@@ -93,13 +101,21 @@ def plot_language_wealth_heatmap(model, step_num):
     
     plt.tight_layout()
     plt.gca().invert_yaxis()
-    plt.savefig(f"/home/travis/Desktop/Python/LangWealthHeatmap_Step_{step_num}.png")
+    plt.savefig(f"/home/travis/Desktop/Python/LangWealthHeatmapGridSize_{grid_size}_Step_{step_num}.png")
     plt.close()
 
-def plot_wealth_language_heatmap(model, step_num):
+def plot_wealth_language_heatmap(model, step_num, grid_size):
     # Create grid arrays
     grid_width = max(agent.pos[0] for agent in model.agents) + 1
     grid_height = max(agent.pos[1] for agent in model.agents) + 1
+    
+    # Calculate dynamic figure size based on grid dimensions
+    cell_size = 1.0  # Base size per cell (inches)
+    padding = 2.0    # Additional padding for labels/title
+    
+    # Determine figure dimensions
+    fig_width = model.grid.width * cell_size + padding
+    fig_height = model.grid.height * cell_size + padding
     
     # Initialize wealth and language grids
     wealth_grid = np.zeros((grid_height, grid_width))
@@ -115,7 +131,7 @@ def plot_wealth_language_heatmap(model, step_num):
         language_grid[y, x] = lang_codes[agent.lang[0]]  # Use primary language
     
     # Create figure
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(fig_width, fig_height))
     
     # Wealth heatmap
     wealth_plot = ax1.imshow(wealth_grid, cmap='YlOrRd', interpolation='nearest')
@@ -140,19 +156,31 @@ def plot_wealth_language_heatmap(model, step_num):
         ax.axvline(x=grid_width//2 - 0.5, color='black', linestyle='--', linewidth=2)
     
     plt.tight_layout()
-    plt.savefig("/home/travis/Desktop/Python/HeatMap_Step_{}.png".format(step_num))
+    plt.savefig("/home/travis/Desktop/Python/HeatMap_GridSize_{}_Step_{}.png".format(grid_size, step_num))
     plt.close()
 
-def lang_plot(model, step_numb):
+def lang_plot(model, step_numb, grid_size):
     agent_counts = np.zeros((model.grid.width, model.grid.height))
+    
+    # Calculate dynamic figure size based on grid dimensions
+    cell_size = 1.0  # Base size per cell (inches)
+    padding = 2.0    # Additional padding for labels/title
+    
+    # Determine figure dimensions
+    fig_width = model.grid.width * cell_size + padding
+    fig_height = model.grid.height * cell_size + padding
 
     for cell in model.grid.all_cells:
         agent_counts[cell.coordinate] = len(cell.agents)
     #agent_counts.T
     # Plot using seaborn, with a visual size of 5x5
+    # Plot agent counts
+    plt.figure(figsize=(fig_width, fig_height))
+    
     g = sns.heatmap(agent_counts, cmap="viridis", annot=True, cbar=False, square=True)
-    g.figure.set_size_inches(5, 5)
+    #g.figure.set_size_inches(200, 200)
     g.set(title="Number of agents on each cell of the grid");
+    plt.tight_layout()
     plt.savefig("/home/travis/Desktop/Python/Agents_Step_{}.png".format(step_numb))
     plt.close()
     # After running the model...
@@ -162,31 +190,35 @@ def lang_plot(model, step_numb):
     german_counts = model.count_language_per_cell("German")
 
     # Plot Dutch
+    plt.figure(figsize=(fig_width, fig_height))
     sns.heatmap(dutch_counts, cmap="Blues", annot=True, square=True)
     plt.title("Dutch Speakers Step: {}".format(step_numb))
     plt.gca().invert_yaxis()
-    plt.savefig("/home/travis/Desktop/Python/DutchSpeakers_Step_{}.png".format(step_numb))
+    plt.savefig("/home/travis/Desktop/Python/DutchSpeakers_GridSize_{}_Step_{}.png".format(grid_size,step_numb), dpi=300)
     plt.close()
 
     # Plot French
+    plt.figure(figsize=(fig_width, fig_height))
     sns.heatmap(french_counts, cmap="Reds", annot=True, square=True)
     plt.title("French Speakers Step: {}".format(step_numb))
     plt.gca().invert_yaxis()
-    plt.savefig("/home/travis/Desktop/Python/FrenchSpeakers_Step_{}.png".format(step_numb))
+    plt.savefig("/home/travis/Desktop/Python/FrenchSpeakers_GridSize_{}_Step_{}.png".format(grid_size,step_numb))
     plt.close()
 
     # Plot English
+    plt.figure(figsize=(fig_width, fig_height))
     sns.heatmap(english_counts, cmap="Greens", annot=True, square=True)
     plt.title("English Speakers Step: {}".format(step_numb))
     plt.gca().invert_yaxis()
-    plt.savefig("/home/travis/Desktop/Python/EnglishSpeakers_Step_{}.png".format(step_numb))
+    plt.savefig("/home/travis/Desktop/Python/EnglishSpeakers_GridSize_{}_Step_{}.png".format(grid_size,step_numb))
     plt.close()
 
     # Plot German
+    plt.figure(figsize=(fig_width, fig_height))
     sns.heatmap(german_counts, cmap="Purples", annot=True, square=True)
     plt.title("German Speakers Step: {}".format(step_numb))
     plt.gca().invert_yaxis()
-    plt.savefig("/home/travis/Desktop/Python/GermanSpeakers_Step_{}.png".format(step_numb))
+    plt.savefig("/home/travis/Desktop/Python/GermanSpeakers_GridSize_{}_Step_{}.png".format(grid_size,step_numb))
     plt.close()
 
 #draw = choice(list(lang_dict.keys()), 2, p=list(lang_dict.values()))
@@ -265,10 +297,40 @@ class MoneyAgent(CellAgent):
 
     def give_money(self):
         cellmates = [a for a in self.cell.agents if a is not self]  # Get all agents in cell
+        cellmates_native = [agentc for agentc in cellmates if self.native == agentc.native]
+        
+        if self.wealth > 0 and cellmates_native:
+            other_agentn = self.random.choice(cellmates_native)
+            
+            can_talk = False
+            langs_1 = self.lang
+            
+            langs_2 = other_agentn.lang
+            
+            for i in langs_1:
+                if i in langs_2:
+                    can_talk = True
+                else:
+                    pass
+            
+            if other_agentn is not None and can_talk is True:
+                if self.native == other_agentn.native:
+                    exchange_int = random.randint(10, 25)
+                    other_agentn.wealth += exchange_int
+                    self.wealth -= exchange_int
+                else:
+                    exchange_int_2 = random.randint(1, 5)
+                    other_agentn.wealth += exchange_int_2
+                    self.wealth -= exchange_int_2
+                    
+            elif can_talk is False:
+                pass #print("Exchange not possible. Agent 1 speaks {} and {}. Agent 2 speaks {} and {}".format(langs_1[0], langs_1[1], langs_2[0], langs_2[1]))
+
+
         
         
 
-        if self.wealth > 0 and cellmates:
+        elif self.wealth > 0 and cellmates:
             other_agent = self.random.choice(cellmates)
             
             can_talk = False
@@ -307,7 +369,7 @@ class MoneyModel(mesa.Model):
         
         
         # Instantiate an instance of Moore neighborhood space
-        self.grid = OrthogonalMooreGrid((width, height), torus=True, capacity=10, random=self.random)
+        self.grid = OrthogonalMooreGrid((width, height), torus=True, capacity=100, random=self.random)
 
         # Create agents
         agents = MoneyAgent.create_agents(self, self.num_agents, 
@@ -334,37 +396,42 @@ class MoneyModel(mesa.Model):
             lang_counts[x, y] = count
         
         return lang_counts
+
+width = 100
+length = 100
+grid_size = width * length
+agents_num = 100_000
         
-model = MoneyModel(100, 10, 10)  # Tells the model to create 10 agents
+model = MoneyModel(agents_num, width, length)  # Tells the model to create 10 agents
 step_number = 0
 for _ in range(1):  # Runs the model for 1 step;
     model.step()
     step_number += 1
     
-plot_wealth_language_heatmap(model, step_number)
-lang_plot(model, step_number)
-plot_language_wealth_heatmap(model, step_number)
+plot_wealth_language_heatmap(model, step_number, grid_size)
+lang_plot(model, step_number, grid_size)
+plot_language_wealth_heatmap(model, step_number, grid_size)
 
 for _ in range(9):  # Runs the model for 9 steps; Total = 10
     model.step()
     step_number += 1
     
-plot_wealth_language_heatmap(model, step_number)
-lang_plot(model, step_number)
-plot_language_wealth_heatmap(model, step_number)
+plot_wealth_language_heatmap(model, step_number, grid_size)
+lang_plot(model, step_number, grid_size)
+plot_language_wealth_heatmap(model, step_number, grid_size)
   
 for _ in range(90):  # Runs the model for 90 steps; Total = 100
     model.step()
     step_number += 1
     
-plot_wealth_language_heatmap(model, step_number)
-lang_plot(model, step_number)
-plot_language_wealth_heatmap(model, step_number)
+plot_wealth_language_heatmap(model, step_number, grid_size)
+lang_plot(model, step_number, grid_size)
+plot_language_wealth_heatmap(model, step_number, grid_size)
 
 for _ in range(900):  # Runs the model for 900 steps; Total = 1000
     model.step()
     step_number += 1
     
-plot_wealth_language_heatmap(model, step_number)
-lang_plot(model, step_number)
-plot_language_wealth_heatmap(model, step_number)
+plot_wealth_language_heatmap(model, step_number, grid_size)
+lang_plot(model, step_number, grid_size)
+plot_language_wealth_heatmap(model, step_number, grid_size)
